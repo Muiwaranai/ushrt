@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"ushrt/internal/model"
 	"ushrt/internal/service"
 )
 
@@ -16,29 +18,25 @@ func New(s *service.Service) Handler {
 	}
 }
 
-func (h Handler) LoadView(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	if len(r.URL.Path) == 9 {
-		h.Redirect(w, r)
-		return
-	}
-
+func (h *Handler) LoadView(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "internal/view/index.html")
 	return
 }
 
-func (h Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Hi from encode")
+func (h *Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
+	var u model.URL
+	err := json.NewDecoder(r.Body).Decode(&u)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	fmt.Println(u)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(u)
 }
 
-func (h Handler) DecodeUrl(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Hi from decode")
-}
+func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 
-func (h Handler) Redirect(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Hi from redirect")
 }

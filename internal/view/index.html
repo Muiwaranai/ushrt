@@ -57,9 +57,10 @@
       border: 1px solid #ccc;
       font-size: 1rem;
       width: 100%;
+      margin-bottom: 20px;
     }
 
-    select, button {
+    button {
       padding: 0.75rem;
       border-radius: 6px;
       border: 1px solid #ccc;
@@ -78,6 +79,11 @@
     button:hover {
       background-color: #0056b3;
     }
+
+    #result-div {
+  text-align: center;
+}
+
   </style>
 </head>
 <body>
@@ -87,67 +93,61 @@
   </header>
 
   <main>
-    <form class="form-wrapper" id="shorten-form">
-      <input type="text" name="url" placeholder="Paste your URL" required />
-      <select name="action" required>
-        <option value="">Choose action</option>
-        <option value="encode">Encode URL</option>
-        <option value="decode">Decode URL</option>
-      </select>
-      <button type="submit">Go</button>
-    </form>
+    <div class="form-wrapper">
+      <form id="shorten-form">
+        <input type="text" name="url" placeholder="Paste your URL" required />
+        <button type="submit">Shorten</button>
+      </form>
+      <div id="result-div">
+        <a id="result-link" href=""></a>
+      </div>
+    </div>
   </main>
+  
+  
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById('shorten-form')
+    const form = document.getElementById('shorten-form');
+    const resultDiv = document.getElementById('result-div');
+    const resultLink = document.getElementById('result-link');
+  
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const url = formData.get("url").trim();
+  
+      if (!url) {
+        resultDiv.textContent = "Please enter a URL.";
+        resultDiv.style.color = "red";
+        return;
+      }
+  
+      try {
+        const response = await fetch("api/encode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const url = formData.get("url").trim();
-        const action = formData.get("action");
-
-        if (!url || !action) {
-          alert("Please fill in all fields.");
+        if (!response.ok) {
+          resultDiv.textContent = result.error || "Something went wrong.";
+          resultDiv.style.color = "red";
+          resultLink.removeAttribute("href");
           return;
         }
-
-        let endpoint = "";
-        switch (action) {
-          case "encode":
-            endpoint = "/api/encode";
-            break;
-          case "decode":
-            endpoint = "/api/decode";
-            break;
-          default:
-            alert("Invalid action selected.");
-            return;
-        }
-
-        try {
-          const response = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url }),
-          });
-
-          const result = await response.json();
-
-          if (!response.ok) {
-            alert(result.error || "Something went wrong.");
-            return;
-          }
-
-          const output = action === "encoded" ? `decoded: ${result.short_url}` : `Original: ${result.original_url}`;
-          alert(output);
-        } catch (err) {
-          console.error(err);
-          alert("Request failed.");
-        }
-          })
-        })
+  
+        const result = await response.json();
+  
+        resultLink.textContent = `Shortened URL: ${result.url}`;
+        resultLink.href = result.url
+        resultLink.style.color = "#007bff";
+      } catch (err) {
+        console.error(err);
+        resultDiv.textContent = "Request failed.";
+        resultDiv.style.color = "red";
+      }
+    });
   </script>
+  
 </body>
 </html>
