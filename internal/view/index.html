@@ -95,11 +95,11 @@
   <main>
     <div class="form-wrapper">
       <form id="shorten-form">
-        <input type="text" name="url" placeholder="Paste your URL" required />
+        <input id type="text" name="url" placeholder="Paste your URL" required />
         <button type="submit">Shorten</button>
       </form>
       <div id="result-div">
-        <a id="result-link" href=""></a>
+        <a id="result-link"></a>
       </div>
     </div>
   </main>
@@ -107,14 +107,14 @@
   
 
   <script>
-    const form = document.getElementById('shorten-form');
-    const resultDiv = document.getElementById('result-div');
-    const resultLink = document.getElementById('result-link');
+    const form = document.getElementById('shorten-form')
+    const resultDiv = document.getElementById('result-div')
+    const resultLink = document.getElementById('result-link')
   
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const formData = new FormData(form);
-      const url = formData.get("url").trim();
+      const url = formData.get("url").trim()
   
       if (!url) {
         resultDiv.textContent = "Please enter a URL.";
@@ -129,22 +129,24 @@
           body: JSON.stringify({ url }),
         });
 
+        const result = await response.json()
+
         if (!response.ok) {
-          resultDiv.textContent = result.error || "Something went wrong.";
+          resultDiv.textContent = result.error || "Something went wrong."
           resultDiv.style.color = "red";
-          resultLink.removeAttribute("href");
+          resultLink.removeAttribute("href")
           return;
         }
   
-        const result = await response.json();
-  
-        resultLink.textContent = `Shortened URL: ${result.url}`;
+        resultLink.textContent = result.url
         resultLink.href = result.url
-        resultLink.style.color = "#007bff";
+        resultLink.style.color = "#007bff"
+
+        form.reset()
       } catch (err) {
         console.error(err);
-        resultDiv.textContent = "Request failed.";
-        resultDiv.style.color = "red";
+        resultDiv.textContent = "Request failed."
+        resultDiv.style.color = "red"
       }
     });
   </script>

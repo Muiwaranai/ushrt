@@ -34,7 +34,7 @@ func main() {
 	handler := handler.New(service)
 
 	http.HandleFunc("/", handler.LoadView)
-	http.HandleFunc("/s/", handler.Redirect)
+	http.HandleFunc("/r/", handler.Redirect)
 	http.HandleFunc("/api/encode", handler.EncodeURL)
 
 	log.Printf("Server is running at: http://localhost:%s", serverPort)
