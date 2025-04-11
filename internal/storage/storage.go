@@ -11,7 +11,12 @@ type Database struct {
 }
 
 func New() (*Database, error) {
-	pull, err := pgxpool.New(context.Background(), genConnectionString())
+	connString, err := genConnectionString()
+	if err != nil {
+		return nil, err
+	}
+
+	pull, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
 		return nil, err
 	}
@@ -23,4 +28,19 @@ func New() (*Database, error) {
 
 func (db *Database) Close() {
 	db.pull.Close()
+}
+
+// GetEncoded implements services.Storage.
+func (db *Database) GetEncoded(short string) (string, error) {
+	panic("unimplemented")
+}
+
+// GetOrdinary implements services.Storage.
+func (db *Database) GetOrdinary(url string) (string, error) {
+	panic("unimplemented")
+}
+
+// InsertURL implements services.Storage.
+func (db *Database) InsertURL(URL string, short string) error {
+	panic("unimplemented")
 }

@@ -2,6 +2,10 @@ package main
 
 import (
 	"log"
+	"net/http"
+	"os"
+	"ushrt/internal/handler"
+	"ushrt/internal/service"
 	"ushrt/internal/storage"
 
 	"github.com/joho/godotenv"
@@ -20,4 +24,14 @@ func main() {
 		log.Fatal(err)
 	}
 	defer database.Close()
+
+	service := service.New(database)
+	handler := handler.New(service)
+
+	http.HandleFunc("/", handler.LoadView)
+
+	log.Println("Server running on port: ", os.Getenv("SERVER_PORT"))
+	if err := http.ListenAndServe(":"+os.Getenv("SERVER_PORT"), nil); err != nil {
+		log.Fatal("Error", err)
+	}
 }
