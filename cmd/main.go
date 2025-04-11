@@ -25,13 +25,21 @@ func main() {
 	}
 	defer database.Close()
 
+	// database, _ := storage.Mock()
+
 	service := service.New(database)
 	handler := handler.New(service)
 
 	http.HandleFunc("/", handler.LoadView)
 
-	log.Println("Server running on port: ", os.Getenv("SERVER_PORT"))
-	if err := http.ListenAndServe(":"+os.Getenv("SERVER_PORT"), nil); err != nil {
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		log.Fatal("SERVER_PORT environment variable is missing")
+	}
+
+	log.Printf("Server is running at: http://localhost:%s", port)
+
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal("Error", err)
 	}
 }

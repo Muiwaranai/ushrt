@@ -10,6 +10,12 @@ type Database struct {
 	pull *pgxpool.Pool
 }
 
+func Mock() (*Database, error) {
+	return &Database{
+		nil,
+	}, nil
+}
+
 func New() (*Database, error) {
 	connString, err := genConnectionString()
 	if err != nil {
