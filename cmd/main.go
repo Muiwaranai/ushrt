@@ -31,6 +31,8 @@ func main() {
 	handler := handler.New(service)
 
 	http.HandleFunc("/", handler.LoadView)
+	http.HandleFunc("/api/encode", handler.EncodeURL)
+	http.HandleFunc("/api/decode", handler.DecodeUrl)
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
