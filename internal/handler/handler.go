@@ -2,7 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"ushrt/internal/model"
 	"ushrt/internal/service"
 )
@@ -33,9 +36,14 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//ordinary := ""
+	ordinary, err := h.GetOrdinary(r.URL.Path)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("500 server error%s", err), http.StatusInternalServerError)
+		return
+	}
 
-	// get original link from storage and redirect
+	http.Redirect(w, r, ordinary, http.StatusFound)
+
 }
 
 func (h *Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +59,17 @@ func (h *Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.Unireslocator = h.Service.EncodeAndSaveURL(u.Unireslocator)
+	u.Unireslocator, err = h.Service.EncodeAndSaveURL(u.Unireslocator)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("500 server error%s", err), http.StatusInternalServerError)
+		return
+	}
+
+	issuer := os.Getenv("ISSUER")
+	if issuer == "" {
+		log.Fatal("ISSUER environment variable is missing")
+	}
+	u.Unireslocator = fmt.Sprintf("%s%s", issuer, u.Unireslocator)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
