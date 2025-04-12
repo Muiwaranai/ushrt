@@ -46,7 +46,6 @@ func genConnectionString() (string, error) {
 }
 
 func (db *Database) ByShort(short string) (string, error) {
-	fmt.Println(short)
 	var url string
 	row := db.pool.QueryRow(context.Background(), "SELECT long_url FROM urls WHERE short_url=$1", short)
 	err := row.Scan(&url)
