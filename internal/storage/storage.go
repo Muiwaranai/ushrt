@@ -33,45 +33,6 @@ func (db *Database) Close() {
 	db.pool.Close()
 }
 
-func (db *Database) GetEncoded(url string) (string, error) {
-	var encodedurl string
-	err := db.pool.QueryRow(context.Background(), "SELECT encoded_url COUNT FROM urls WHERE original_url = $1", url).Scan(&encodedurl)
-	if err != nil {
-		return "", err
-	}
-	return encodedurl, nil
-}
-
-func (db *Database) GetOrdinary(url string) (string, error) {
-	var ordinaryurl string
-	err := db.pool.QueryRow(context.Background(), "SELECT original_url COUNT FROM urls WHERE encoded_url = $1", url).Scan(&ordinaryurl)
-	if err != nil {
-		return "", err
-	}
-	return ordinaryurl, nil
-}
-
-func (db *Database) ExistsOrdinary(url string) bool {
-	var count int
-	db.pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM urls WHERE original_url = $1", url).Scan(&count)
-	return count > 0
-}
-
-func (db *Database) ExistsEncoded(url string) bool {
-	var count int
-	db.pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM urls WHERE original_url = $1", url).Scan(&count)
-	return count > 0
-}
-
-func (db *Database) InsertURL(url string, surl string) error {
-	query := `INSERT INTO urls (original_url, encoded_url) VALUES ($1, $2)`
-	_, err := db.pool.Exec(context.Background(), query, url, surl)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func genConnectionString() (string, error) {
 	dbUser := os.Getenv("DB_USER")
 	dbPass := os.Getenv("DB_PASS")
@@ -82,4 +43,24 @@ func genConnectionString() (string, error) {
 		return "", errors.New("Empty .env variable")
 	}
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", dbUser, dbPass, dbHost, dbPort, dbName), nil
+}
+
+func (db *Database) ByShort(short string) (string, error) {
+	fmt.Println(short)
+	var url string
+	row := db.pool.QueryRow(context.Background(), "SELECT long_url FROM urls WHERE short_url=$1", short)
+	err := row.Scan(&url)
+	return url, err
+}
+
+func (db *Database) ByURL(url string) (string, error) {
+	var short string
+	row := db.pool.QueryRow(context.Background(), "SELECT short_url FROM urls WHERE long_url=$1", url)
+	err := row.Scan(&short)
+	return short, err
+}
+
+func (db *Database) Insert(url string, short string) error {
+	_, err := db.pool.Exec(context.Background(), "INSERT INTO urls (long_url, short_url) VALUES ($1, $2)", url, short)
+	return err
 }

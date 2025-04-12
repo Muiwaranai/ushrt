@@ -20,48 +20,48 @@ func New(s *service.Service) Handler {
 	}
 }
 
-func (h *Handler) LoadView(w http.ResponseWriter, r *http.Request) {
+func (s *Handler) LoadView(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet || r.URL.Path != "/" {
 		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	http.ServeFile(w, r, "internal/view/index.html")
+	http.ServeFile(w, r, "internal/view/index_copy.html")
 	return
 }
 
 func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet || r.URL.Path[:3] != "/r/" && len(r.URL.Path[3:]) != 8 {
-		http.Error(w, "Adress not exists", http.StatusNotFound)
+	if r.Method != http.MethodGet || r.URL.Path[:3] != "/r/" && len(r.URL.Path) != 11 {
+		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	ordinary, err := h.GetOrdinary(r.URL.Path)
+	url, err := h.Service.Hash2URL(r.URL.Path)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("500 server error%s", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("500 server error: %s", err), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, ordinary, http.StatusFound)
-
+	http.Redirect(w, r, "https://"+url, http.StatusFound)
 }
 
-func (h *Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ProcessUrl(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost || r.URL.Path != "/api/encode" {
 		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var u model.URL
-	err := json.NewDecoder(r.Body).Decode(&u)
+	var url model.URL
+	err := json.NewDecoder(r.Body).Decode(&url)
 	if err != nil {
+		log.Println("error during json decoding")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	u.Unireslocator, err = h.Service.EncodeAndSaveURL(u.Unireslocator)
+	short, err := h.Service.URL2Hash(url.URL)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("500 server error%s", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("500 server error: %s", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -69,9 +69,10 @@ func (h *Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
 	if issuer == "" {
 		log.Fatal("ISSUER environment variable is missing")
 	}
-	u.Unireslocator = fmt.Sprintf("%s%s", issuer, u.Unireslocator)
+	short = fmt.Sprintf("%s%s", issuer, short)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(u)
+	json.NewEncoder(w).Encode(short)
+
 }

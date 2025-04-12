@@ -35,7 +35,7 @@ func main() {
 
 	http.HandleFunc("/", handler.LoadView)
 	http.HandleFunc("/r/", handler.Redirect)
-	http.HandleFunc("/api/encode", handler.EncodeURL)
+	http.HandleFunc("/api/encode", handler.ProcessUrl)
 
 	log.Printf("Server is running at: http://localhost:%s", serverPort)
 	if err := http.ListenAndServe(":"+serverPort, nil); err != nil {
